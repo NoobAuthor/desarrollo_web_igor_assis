@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Listado de Actividades</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Listado de Actividades</h1>
+      <nav><a href="index.html">Volver a la Portada</a></nav>
+    </header>
+    <main>
+      <table>
+        <thead>
+          <tr>
+            <th>Inicio</th>
+            <th>Término</th>
+            <th>Comuna</th>
+            <th>Sector</th>
+            <th>Tema</th>
+            <th>Nombre Organizador</th>
+            <th>Total Fotos</th>
+          </tr>
+        </thead>
+        <tbody id="listado"></tbody>
+      </table>
+    </main>
+    <script src="data.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const tbody = document.getElementById("listado");
+        actividades.forEach((a, i) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+                    <td>${a.inicio.replace("T", " ")}</td>
+                    <td>${a.termino ? a.termino.replace("T", " ") : "-"}</td>
+                    <td>${a.comuna}</td>
+                    <td>${a.sector || "-"}</td>
+                    <td>${a.tema}</td>
+                    <td>${a.organizador}</td>
+                    <td>${a.fotos.length}</td>
+                `;
+          tr.addEventListener(
+            "click",
+            () => (window.location.href = `detalle_actividad.html?id=${i}`),
+          );
+          tbody.appendChild(tr);
+        });
+      });
+    </script>
+  </body>
+</html>

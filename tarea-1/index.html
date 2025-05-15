@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gestión de Actividades Recreativas</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Bienvenidos a Gestión de Actividades Recreativas</h1>
+      <nav>
+        <ul>
+          <li><a href="actividad.html">Agregar actividad</a></li>
+          <li>
+            <a href="listado.html">Ver listado de actividades</a>
+          </li>
+          <li><a href="estadisticas.html">Estadísticas</a></li>
+        </ul>
+      </nav>
+    </header>
+    <main>
+      <h2>Últimas 5 Actividades</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Inicio</th>
+            <th>Término</th>
+            <th>Comuna</th>
+            <th>Sector</th>
+            <th>Tema</th>
+            <th>Foto</th>
+          </tr>
+        </thead>
+        <tbody id="ultimas-actividades"></tbody>
+      </table>
+    </main>
+    <script src="data.js"></script>
+    <script src="scripts.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const tbody = document.getElementById("ultimas-actividades");
+        const ultimas = actividades.slice(-5);
+        ultimas.forEach((actividad) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+                    <td>${actividad.inicio.replace("T", " ")}</td>
+                    <td>${actividad.termino ? actividad.termino.replace("T", " ") : "-"}</td>
+                    <td>${actividad.comuna}</td>
+                    <td>${actividad.sector || "-"}</td>
+                    <td>${actividad.tema}</td>
+                    <td><img src="fotos/${actividad.fotos[0]}" alt="Foto" width="100"></td>
+                `;
+          tbody.appendChild(tr);
+        });
+      });
+    </script>
+  </body>
+</html>
