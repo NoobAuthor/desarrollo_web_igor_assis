@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Agregar Actividad</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Agregar Nueva Actividad</h1>
+      <nav><a href="index.html">Volver a la Portada</a></nav>
+    </header>
+    <main>
+      <form id="formulario">
+        <section>
+          <h2>¿Dónde?</h2>
+          <label
+            >Región:
+            <select id="region" name="region">
+              <option value="">Seleccione</option>
+            </select></label
+          >
+          <label
+            >Comuna:
+            <select id="comuna" name="comuna">
+              <option value="">Seleccione</option>
+            </select></label
+          >
+          <label
+            >Sector:
+            <input type="text" id="sector" name="sector" maxlength="100"
+          /></label>
+        </section>
+        <section>
+          <h2>¿Quién organiza?</h2>
+          <label
+            >Nombre:
+            <input type="text" id="nombre" name="nombre" maxlength="200"
+          /></label>
+          <label
+            >Email: <input type="email" id="email" name="email" maxlength="100"
+          /></label>
+          <label
+            >Número de celular:
+            <input
+              type="tel"
+              id="celular"
+              name="celular"
+              placeholder="+569.12345678"
+          /></label>
+          <div id="contactos">
+            <label
+              >Contactar por:
+              <select class="contactar-por">
+                <option value="">Seleccione</option>
+                <option value="whatsapp">WhatsApp</option>
+                <option value="telegram">Telegram</option>
+                <option value="x">X</option>
+                <option value="instagram">Instagram</option>
+                <option value="tiktok">TikTok</option>
+                <option value="otra">Otra</option>
+              </select>
+              <input
+                type="text"
+                class="contacto-id"
+                style="display: none"
+                minlength="4"
+                maxlength="50"
+              />
+            </label>
+          </div>
+          <button type="button" id="agregar-contacto">
+            Agregar otro medio de contacto
+          </button>
+        </section>
+        <section>
+          <h2>Información de la actividad</h2>
+          <label
+            >Día hora inicio:
+            <input type="datetime-local" id="inicio" name="inicio"
+          /></label>
+          <label
+            >Día hora término:
+            <input type="datetime-local" id="termino" name="termino"
+          /></label>
+          <label
+            >Descripción:
+            <textarea
+              id="descripcion"
+              name="descripcion"
+              cols="50"
+              rows="10"
+            ></textarea>
+          </label>
+          <label
+            >Tema:
+            <select id="tema" name="tema">
+              <option value="">Seleccione</option>
+              <option value="música">Música</option>
+              <option value="deporte">Deporte</option>
+              <option value="ciencias">Ciencias</option>
+              <option value="religión">Religión</option>
+              <option value="política">Política</option>
+              <option value="tecnología">Tecnología</option>
+              <option value="juegos">Juegos</option>
+              <option value="baile">Baile</option>
+              <option value="comida">Comida</option>
+              <option value="otro">Otro</option>
+            </select>
+            <input
+              type="text"
+              id="tema-otro"
+              style="display: none"
+              minlength="3"
+              maxlength="15"
+            />
+          </label>
+          <div id="fotos">
+            <label>Foto: <input type="file" class="foto-input" /></label>
+          </div>
+          <button type="button" id="agregar-foto">Agregar otra foto</button>
+          <button type="submit">Agregar esta actividad</button>
+        </section>
+      </form>
+    </main>
+    <script src="data.js"></script>
+    <script src="scripts.js"></script>
+  </body>
+</html>
