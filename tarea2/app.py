@@ -4,6 +4,9 @@ from sqlalchemy.orm import joinedload
 import os
 from datetime import datetime
 from werkzeug.utils import secure_filename
+from models import Actividad, Comuna, Foto, ActividadTema, Region, ContactarPor
+from models import db
+
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'  # Needed for flash messages
@@ -16,13 +19,10 @@ app.config['UPLOAD_FOLDER'] = os.path.join('static', 'fotos')
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
 
-from models import db
-
 db.init_app(app)
 
-from models import Actividad, Comuna, Foto, ActividadTema, Region, ContactarPor
-
 @app.route('/')
+
 def home():
     actividades = (
         db.session.query(Actividad)
