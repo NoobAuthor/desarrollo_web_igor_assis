@@ -132,7 +132,12 @@ document.addEventListener("DOMContentLoaded", () => {
 			const regionId = this.value;
 			comunaSelect.innerHTML = '<option value="">Seleccione</option>';
 			if (regionId) {
-				fetch(`/comunas/${regionId}`)
+				fetch(`/comunas/${regionId}`, {
+					headers: {
+						Accept: "application/json",
+						"X-Requested-With": "XMLHttpRequest",
+					},
+				})
 					.then(res => res.json())
 					.then(comunas => {
 						comunas.forEach(c => {

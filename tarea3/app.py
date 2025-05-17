@@ -1,14 +1,14 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
-from flask_sqlalchemy import SQLAlchemy
+from flask_wtf.csrf import CSRFProtect
 from sqlalchemy.orm import joinedload
+from sqlalchemy import func, extract
 import os
 from datetime import datetime
 from werkzeug.utils import secure_filename
-from models import Actividad, Comuna, Foto, ActividadTema, Region, ContactarPor, Comentario
-from models import db
-
+from models import Actividad, Comuna, Foto, ActividadTema, Region, ContactarPor, Comentario, db
 app = Flask(__name__)
-app.secret_key = 'supersecretkey'  # Needed for flash messages
+app.secret_key = 'supersecretkey'
+csrf = CSRFProtect(app)
 
 # Database configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://cc5002:programacionweb@localhost:3306/tarea2'
@@ -32,9 +32,7 @@ def home():
     actividades_data = []
     for act in actividades:
         tema = act.temas[0].tema if act.temas else '-'
-        foto_url = None
-        if act.fotos:
-            foto_url = '/static/fotos/' + act.fotos[0].nombre_archivo
+        foto_url = f'/static/fotos/{act.fotos[0].nombre_archivo}' if act.fotos else None
         actividades_data.append({
             'dia_hora_inicio': act.dia_hora_inicio.strftime('%Y-%m-%d %H:%M'),
             'dia_hora_termino': act.dia_hora_termino.strftime('%Y-%m-%d %H:%M') if act.dia_hora_termino else None,
@@ -49,11 +47,9 @@ def home():
 def agregar():
     regiones = Region.query.order_by(Region.nombre).all()
     comunas = []
-    selected_region = None
-    selected_comuna = None
+    selected_region = selected_comuna = None
     errors = []
     if request.method == 'POST':
-        # Get form data
         region_id = request.form.get('region')
         comuna_id = request.form.get('comuna')
         sector = request.form.get('sector')
@@ -68,7 +64,8 @@ def agregar():
         tema = request.form.get('tema')
         tema_otro = request.form.get('tema_otro')
         fotos = request.files.getlist('fotos')
-        # Validation
+
+        # Validaciones
         if not region_id:
             errors.append('Debe seleccionar una región.')
         if not comuna_id:
@@ -87,11 +84,9 @@ def agregar():
             errors.append('Debe seleccionar un tema.')
         if not fotos or not any(f.filename for f in fotos):
             errors.append('Debe subir al menos una foto.')
-        # Validate contacts
         for c, cid in zip(contactos, contacto_ids):
             if c and (len(cid) < 4 or len(cid) > 50):
                 errors.append('ID de contacto debe tener entre 4 y 50 caracteres.')
-        # Validate termino > inicio
         try:
             dt_inicio = datetime.strptime(inicio, '%Y-%m-%dT%H:%M')
             dt_termino = None
@@ -101,14 +96,14 @@ def agregar():
                     errors.append('Fecha de término debe ser mayor que la de inicio.')
         except Exception:
             errors.append('Formato de fecha inválido.')
-        # If errors, re-render form
+
         selected_region = int(region_id) if region_id else None
         selected_comuna = int(comuna_id) if comuna_id else None
         if selected_region:
             comunas = Comuna.query.filter_by(region_id=selected_region).order_by(Comuna.nombre).all()
         if errors:
             return render_template('agregar.html', regiones=regiones, comunas=comunas, errors=errors, selected_region=selected_region, selected_comuna=selected_comuna)
-        # Insert into DB
+
         actividad = Actividad(
             comuna_id=comuna_id,
             sector=sector,
@@ -121,17 +116,14 @@ def agregar():
         )
         db.session.add(actividad)
         db.session.commit()
-        # Temas
         if tema == 'otro':
             tema_obj = ActividadTema(tema=tema, glosa_otro=tema_otro, actividad_id=actividad.id)
         else:
             tema_obj = ActividadTema(tema=tema, actividad_id=actividad.id)
         db.session.add(tema_obj)
-        # Contactos
         for c, cid in zip(contactos, contacto_ids):
             if c and cid:
                 db.session.add(ContactarPor(nombre=c, identificador=cid, actividad_id=actividad.id))
-        # Fotos
         for f in fotos:
             if f and f.filename:
                 filename = secure_filename(f.filename)
@@ -141,7 +133,6 @@ def agregar():
         db.session.commit()
         flash('Actividad agregada exitosamente.')
         return redirect(url_for('home'))
-    # GET
     region_id = request.args.get('region')
     if region_id:
         comunas = Comuna.query.filter_by(region_id=region_id).order_by(Comuna.nombre).all()
@@ -183,15 +174,14 @@ def detalle(actividad_id):
     )
     tema = act.temas[0].tema if act.temas else '-'
     glosa_otro = act.temas[0].glosa_otro if act.temas and act.temas[0].tema == 'otro' else None
-    fotos = ['/static/fotos/' + f.nombre_archivo for f in act.fotos]
+    fotos = [f'/static/fotos/{f.nombre_archivo}' for f in act.fotos]
     contactos = [{'nombre': c.nombre, 'identificador': c.identificador} for c in act.contactos]
     return render_template('detalle.html', actividad=act, tema=tema, glosa_otro=glosa_otro, fotos=fotos, contactos=contactos)
 
 @app.route('/comunas/<int:region_id>')
 def comunas_por_region(region_id):
     comunas = Comuna.query.filter_by(region_id=region_id).order_by(Comuna.nombre).all()
-    comunas_data = [{'id': c.id, 'nombre': c.nombre} for c in comunas]
-    return jsonify(comunas_data)
+    return jsonify([{'id': c.id, 'nombre': c.nombre} for c in comunas])
 
 @app.route('/estadisticas')
 def estadisticas():
@@ -201,39 +191,118 @@ def estadisticas():
 
 @app.route('/api/comentarios/<int:actividad_id>', methods=['GET'])
 def obtener_comentarios(actividad_id):
-    comentarios = Comentario.query.filter_by(actividad_id=actividad_id).order_by(Comentario.fecha.desc()).all()
-    return jsonify([
-        {
-            'nombre': c.nombre,
-            'texto': c.texto,
-            'fecha': c.fecha.strftime('%Y-%m-%d %H:%M')
-        } for c in comentarios
-    ])
+    try:
+        comentarios = Comentario.query.filter_by(actividad_id=actividad_id).order_by(Comentario.fecha.desc()).all()
+        return jsonify({
+            'success': True,
+            'data': [{
+                'nombre': c.nombre,
+                'texto': c.texto,
+                'fecha': c.fecha.strftime('%Y-%m-%d %H:%M')
+            } for c in comentarios]
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': 'Error al obtener comentarios'
+        }), 500
 
 @app.route('/api/comentarios/<int:actividad_id>', methods=['POST'])
 def agregar_comentario(actividad_id):
-    data = request.get_json()
-    nombre = data.get('nombre', '').strip()
-    texto = data.get('texto', '').strip()
+    try:
+        data = request.get_json()
+        nombre = data.get('nombre', '').strip()
+        texto = data.get('texto', '').strip()
+        errores = []
+        
+        if not (3 <= len(nombre) <= 80):
+            errores.append('El nombre debe tener entre 3 y 80 caracteres.')
+        if len(texto) < 5:
+            errores.append('El comentario debe tener al menos 5 caracteres.')
+            
+        if errores:
+            return jsonify({
+                'success': False, 
+                'error': '\n'.join(errores)
+            }), 400
+            
+        comentario = Comentario(
+            nombre=nombre,
+            texto=texto,
+            fecha=datetime.now(),
+            actividad_id=actividad_id
+        )
+        db.session.add(comentario)
+        db.session.commit()
+        
+        return jsonify({'success': True})
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': 'Error al guardar el comentario'
+        }), 500
 
-    errores = []
-    if not (3 <= len(nombre) <= 80):
-        errores.append('El nombre debe tener entre 3 y 80 caracteres.')
-    if len(texto) < 5:
-        errores.append('El comentario debe tener al menos 5 caracteres.')
+# --- API para estadísticas (AJAX) ---
 
-    if errores:
-        return jsonify({'ok': False, 'errores': errores}), 400
-
-    comentario = Comentario(
-        nombre=nombre,
-        texto=texto,
-        fecha=datetime.now(),
-        actividad_id=actividad_id
+@app.route('/api/estadisticas/actividades_por_dia')
+def actividades_por_dia():
+    datos = (
+        db.session.query(
+            func.date(Actividad.dia_hora_inicio).label('dia'),
+            func.count(Actividad.id)
+        )
+        .group_by('dia')
+        .order_by('dia')
+        .all()
     )
-    db.session.add(comentario)
-    db.session.commit()
-    return jsonify({'ok': True})
+    return jsonify([{'dia': str(dia), 'cantidad': cantidad} for dia, cantidad in datos])
+
+@app.route('/api/estadisticas/actividades_por_tipo')
+def actividades_por_tipo():
+    datos = (
+        db.session.query(
+            ActividadTema.tema,
+            func.count(ActividadTema.id)
+        )
+        .group_by(ActividadTema.tema)
+        .all()
+    )
+    return jsonify([{'tema': tema, 'cantidad': cantidad} for tema, cantidad in datos])
+
+@app.route('/api/estadisticas/actividades_por_horario_mes')
+def actividades_por_horario_mes():
+    def horario(dt):
+        h = dt.hour
+        if h < 12:
+            return 'mañana'
+        elif h < 18:
+            return 'mediodía'
+        else:
+            return 'tarde'
+    datos = (
+        db.session.query(
+            extract('month', Actividad.dia_hora_inicio).label('mes'),
+            Actividad.dia_hora_inicio,
+        )
+        .all()
+    )
+    conteo = {}
+    for mes, dt in datos:
+        if mes not in conteo:
+            conteo[mes] = {'mañana': 0, 'mediodía': 0, 'tarde': 0}
+        franja = horario(dt)
+        conteo[mes][franja] += 1
+    resultado = []
+    for mes in sorted(conteo.keys()):
+        resultado.append({
+            'mes': int(mes),
+            'mañana': conteo[mes]['mañana'],
+            'mediodía': conteo[mes]['mediodía'],
+            'tarde': conteo[mes]['tarde']
+        })
+    return jsonify(resultado)
 
 if __name__ == '__main__':
     app.run(debug=True)
