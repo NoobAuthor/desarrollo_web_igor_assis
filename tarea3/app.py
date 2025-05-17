@@ -4,9 +4,8 @@ from sqlalchemy.orm import joinedload
 import os
 from datetime import datetime
 from werkzeug.utils import secure_filename
-from models import Actividad, Comuna, Foto, ActividadTema, Region, ContactarPor
+from models import Actividad, Comuna, Foto, ActividadTema, Region, ContactarPor, Comentario
 from models import db
-
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'  # Needed for flash messages
@@ -22,7 +21,6 @@ if not os.path.exists(app.config['UPLOAD_FOLDER']):
 db.init_app(app)
 
 @app.route('/')
-
 def home():
     actividades = (
         db.session.query(Actividad)
@@ -199,5 +197,43 @@ def comunas_por_region(region_id):
 def estadisticas():
     return render_template('estadisticas.html')
 
+# --- API para comentarios (AJAX) ---
+
+@app.route('/api/comentarios/<int:actividad_id>', methods=['GET'])
+def obtener_comentarios(actividad_id):
+    comentarios = Comentario.query.filter_by(actividad_id=actividad_id).order_by(Comentario.fecha.desc()).all()
+    return jsonify([
+        {
+            'nombre': c.nombre,
+            'texto': c.texto,
+            'fecha': c.fecha.strftime('%Y-%m-%d %H:%M')
+        } for c in comentarios
+    ])
+
+@app.route('/api/comentarios/<int:actividad_id>', methods=['POST'])
+def agregar_comentario(actividad_id):
+    data = request.get_json()
+    nombre = data.get('nombre', '').strip()
+    texto = data.get('texto', '').strip()
+
+    errores = []
+    if not (3 <= len(nombre) <= 80):
+        errores.append('El nombre debe tener entre 3 y 80 caracteres.')
+    if len(texto) < 5:
+        errores.append('El comentario debe tener al menos 5 caracteres.')
+
+    if errores:
+        return jsonify({'ok': False, 'errores': errores}), 400
+
+    comentario = Comentario(
+        nombre=nombre,
+        texto=texto,
+        fecha=datetime.now(),
+        actividad_id=actividad_id
+    )
+    db.session.add(comentario)
+    db.session.commit()
+    return jsonify({'ok': True})
+
 if __name__ == '__main__':
-    app.run(debug=True) 
+    app.run(debug=True)

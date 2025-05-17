@@ -30,4 +30,76 @@
   <img id="modal-img" style="display: block; margin: 50px auto; width: 800px; height: 600px" />
   <button onclick="document.getElementById('modal').style.display='none'">Cerrar</button>
 </div>
-{% endblock %} 
+
+<hr>
+<h2>Comentarios</h2>
+<div id="comentarios-listado">
+  <!-- Los comentarios se cargarán aquí vía JS -->
+</div>
+
+<h3>Agregar comentario</h3>
+<form id="form-comentario" autocomplete="off">
+  <label for="nombre">Nombre:</label>
+  <input type="text" id="nombre" name="nombre" required minlength="3" maxlength="80"><br>
+  <label for="texto">Comentario:</label><br>
+  <textarea id="texto" name="texto" rows="4" cols="50" required minlength="5"></textarea><br>
+  <button type="submit">Agregar comentario</button>
+  <div id="comentario-errores" style="color:red;"></div>
+</form>
+
+<script>
+  const actividadId = {{ actividad.id }};
+
+function cargarComentarios() {
+  fetch(`/api/comentarios/${actividadId}`)
+    .then(r => r.json())
+    .then(data => {
+      let html = '';
+      if (data.length === 0) {
+        html = '<p>No hay comentarios aún.</p>';
+      } else {
+        html = '<ul>';
+        data.forEach(c => {
+          html += `<li><strong>${c.nombre}</strong> (${c.fecha}):<br>${c.texto}</li>`;
+        });
+        html += '</ul>';
+      }
+      document.getElementById('comentarios-listado').innerHTML = html;
+    })
+    .catch(error => {
+      document.getElementById('comentarios-listado').innerHTML = '<p style="color:red;">Error al cargar comentarios</p>';
+    });
+}
+
+document.getElementById('form-comentario').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const nombre = document.getElementById('nombre').value.trim();
+  const texto = document.getElementById('texto').value.trim();
+  
+  fetch(`/api/comentarios/${actividadId}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({nombre, texto})
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      document.getElementById('nombre').value = '';
+      document.getElementById('texto').value = '';
+      document.getElementById('comentario-errores').innerText = '';
+      cargarComentarios(); // Refresh comments list
+    } else {
+      document.getElementById('comentario-errores').innerText = data.error || 'Error al agregar comentario';
+    }
+  })
+  .catch(error => {
+    document.getElementById('comentario-errores').innerText = 'Error de conexión';
+  });
+});
+
+// Load comments when page loads
+cargarComentarios();
+</script>
+{% endblock %}
