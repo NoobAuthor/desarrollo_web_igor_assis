@@ -1,0 +1,61 @@
+{% extends 'base.html' %} {% block title %}Estadísticas{% endblock %} {% block
+content %}
+<h2>Estadísticas</h2>
+
+<div id="grafico-lineas" style="width: 100%; height: 400px"></div>
+<div id="grafico-torta" style="width: 100%; height: 400px"></div>
+<div id="grafico-barras" style="width: 100%; height: 400px"></div>
+<p><a href="{{ url_for('home') }}">Volver a la portada</a></p>
+
+<!-- Highcharts CDN -->
+<script src="https://code.highcharts.com/highcharts.js"></script>
+
+<script>
+	// Gráfico de líneas: actividades por día
+	fetch("/api/estadisticas/actividades_por_dia")
+		.then(r => r.json())
+		.then(data => {
+			Highcharts.chart("grafico-lineas", {
+				chart: { type: "line" },
+				title: { text: "Cantidad de actividades por día" },
+				xAxis: { categories: data.map(d => d.dia) },
+				yAxis: { title: { text: "Cantidad" } },
+				series: [{ name: "Actividades", data: data.map(d => d.cantidad) }],
+			});
+		});
+
+	// Gráfico de torta: actividades por tipo
+	fetch("/api/estadisticas/actividades_por_tipo")
+		.then(r => r.json())
+		.then(data => {
+			Highcharts.chart("grafico-torta", {
+				chart: { type: "pie" },
+				title: { text: "Actividades por tipo" },
+				series: [
+					{
+						name: "Cantidad",
+						colorByPoint: true,
+						data: data.map(d => ({ name: d.tema, y: d.cantidad })),
+					},
+				],
+			});
+		});
+
+	// Gráfico de barras: actividades por horario y mes
+	fetch("/api/estadisticas/actividades_por_horario_mes")
+		.then(r => r.json())
+		.then(data => {
+			Highcharts.chart("grafico-barras", {
+				chart: { type: "column" },
+				title: { text: "Actividades por mes y horario" },
+				xAxis: { categories: data.map(d => "Mes " + d.mes) },
+				yAxis: { min: 0, title: { text: "Cantidad" } },
+				series: [
+					{ name: "Mañana", data: data.map(d => d["mañana"]) },
+					{ name: "Mediodía", data: data.map(d => d["mediodía"]) },
+					{ name: "Tarde", data: data.map(d => d["tarde"]) },
+				],
+			});
+		});
+</script>
+{% endblock %}
