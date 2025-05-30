@@ -16,16 +16,21 @@ Aplicación web para la gestión de actividades recreativas, desarrollada con Fl
 ## Instalación y Setup
 
 1. Instala las dependencias:
+
    ```
    pip install -r requirements.txt
    ```
+
 2. Crea la base de datos y carga los datos:
    - Ejecuta `tarea2.sql` y luego `region-comuna.sql` en tu MySQL:
+
      ```
      mysql -u cc5002 -p < tarea2.sql
      mysql -u cc5002 -p tarea2 < region-comuna.sql
      ```
+
 3. Ejecuta la app:
+
    ```
    python app.py
    ```
@@ -43,13 +48,6 @@ Aplicación web para la gestión de actividades recreativas, desarrollada con Fl
 - **Validación:** Todos los formularios cumplen HTML5/CSS3 y deben validarse en [W3C HTML](https://validator.w3.org/) y [W3C CSS](https://jigsaw.w3.org/css-validator/).
 - **Estadísticas:** La sección estará disponible en la próxima entrega, como indica el enunciado.
 
-## Entrega
-
-- Sube el código a un repositorio público en GitHub, rama `Tarea 2`.
-- Incluye este README y los scripts SQL.
-- Entrega la URL del repositorio en u-cursos.
-- (Opcional) Adjunta un zip como respaldo.
-
 ## Autor
 
 - Igor Assis Passos de Souza
@@ -60,8 +58,3 @@ Aplicación web para la gestión de actividades recreativas, desarrollada con Fl
 - `models.py`: Modelos SQLAlchemy (por crear)
 - `static/`: Archivos estáticos (CSS, fotos)
 - `templates/`: Plantillas HTML Jinja2
-
-## Notas
-
-- Reutiliza los formularios y validaciones de la Tarea 1.
-- Ver instrucciones en el enunciado para detalles de entrega y requisitos.
