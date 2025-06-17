@@ -24,13 +24,13 @@ Aplicación web para la gestión de actividades recreativas, desarrollada con Fl
    ```
 
 2. Crea la base de datos y carga los datos:
-   - Ejecuta `tarea2.sql`, `tabla-comentario.sql`, `tabla-nota.sql` y luego `region-comuna.sql` en tu MySQL:
+   - Ejecuta los archivos SQL en el orden correcto:
 
      ```
-     mysql -u cc5002 -p < tarea2.sql
-     mysql -u cc5002 -p tarea2 < tabla-comentario.sql
-     mysql -u cc5002 -p tarea2 < tabla-nota.sql
-     mysql -u cc5002 -p tarea2 < region-comuna.sql
+     mysql -u cc5002 -p < database/tarea2.sql
+     mysql -u cc5002 -p tarea2 < database/tabla-comentario.sql
+     mysql -u cc5002 -p tarea2 < database/tabla-nota.sql
+     mysql -u cc5002 -p tarea2 < database/region-comuna.sql
      ```
 
 3. Ejecuta la app:
@@ -77,11 +77,31 @@ Aplicación web para la gestión de actividades recreativas, desarrollada con Fl
 
 ## Estructura
 
-- `app.py`: Aplicación principal Flask con APIs REST
-- `models.py`: Modelos SQLAlchemy (Actividad, Comentario, Nota, etc.)
-- `static/`: Archivos estáticos (CSS, JS, fotos)
-- `templates/`: Plantillas HTML Jinja2
-- `tabla-comentario.sql`: Script para crear tabla de comentarios
-- `tabla-nota.sql`: Script para crear tabla de valoraciones
-- `tarea2.sql`: Script principal de base de datos
-- `region-comuna.sql`: Datos de regiones y comunas
+```
+tarea4/
+├── app.py                    # Aplicación principal Flask con APIs REST
+├── models.py                 # Modelos SQLAlchemy (Actividad, Comentario, Nota, etc.)
+├── requirements.txt          # Dependencias Python
+├── README.md                 # Esta documentación
+├── SETUP.md                  # Guía de instalación detallada
+├── database/
+│   ├── tarea2.sql           # Script principal de base de datos
+│   ├── tabla-comentario.sql # Script para crear tabla de comentarios
+│   ├── tabla-nota.sql       # Script para crear tabla de valoraciones
+│   └── region-comuna.sql    # Datos de regiones y comunas
+├── docs/
+│   └── Enunciado Tarea 4.pdf # Enunciado original
+├── scripts/
+│   └── init_sample_data.py  # Generador de datos de prueba
+├── static/
+│   ├── style.css            # Estilos CSS
+│   ├── script.js            # JavaScript
+│   └── fotos/               # Directorio para fotos subidas
+└── templates/
+    ├── base.html            # Plantilla base
+    ├── index.html           # Página principal
+    ├── agregar.html         # Formulario agregar actividad
+    ├── listado.html         # Listado de actividades
+    ├── detalle.html         # Detalle con comentarios y valoraciones
+    └── estadisticas.html    # Estadísticas con gráficos
+```

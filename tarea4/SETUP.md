@@ -18,16 +18,16 @@
 2. **Create and populate database:**
    ```bash
    # Create main database structure
-   mysql -u cc5002 -p < tarea2.sql
+   mysql -u cc5002 -p < database/tarea2.sql
    
    # Add comment table
-   mysql -u cc5002 -p tarea2 < tabla-comentario.sql
+   mysql -u cc5002 -p tarea2 < database/tabla-comentario.sql
    
    # Add rating table
-   mysql -u cc5002 -p tarea2 < tabla-nota.sql
+   mysql -u cc5002 -p tarea2 < database/tabla-nota.sql
    
    # Populate regions and communes
-   mysql -u cc5002 -p tarea2 < region-comuna.sql
+   mysql -u cc5002 -p tarea2 < database/region-comuna.sql
    ```
 
 ## Python Environment Setup
@@ -57,7 +57,7 @@
 To populate the database with sample activities for testing:
 
 ```bash
-python init_sample_data.py
+python scripts/init_sample_data.py
 ```
 
 This will create 5 sample activities with comments and ratings.
@@ -107,28 +107,32 @@ This will create 5 sample activities with comments and ratings.
 ## File Structure
 
 ```
-tarea4_implementation/
+tarea4/
 ├── app.py                 # Main Flask application
 ├── models.py              # Database models
 ├── requirements.txt       # Python dependencies
 ├── README.md             # Project documentation
 ├── SETUP.md              # This setup guide
-├── init_sample_data.py   # Sample data generator
+├── database/
+│   ├── tarea2.sql        # Main database schema
+│   ├── tabla-comentario.sql  # Comments table
+│   ├── tabla-nota.sql    # Ratings table
+│   └── region-comuna.sql # Chilean regions and communes data
+├── docs/
+│   └── Enunciado Tarea 4.pdf  # Assignment requirements
+├── scripts/
+│   └── init_sample_data.py    # Sample data generator
 ├── static/
 │   ├── style.css         # Styling
 │   ├── script.js         # JavaScript functionality
 │   └── fotos/            # Uploaded photos directory
-├── templates/
-│   ├── base.html         # Base template
-│   ├── index.html        # Home page
-│   ├── agregar.html      # Add activity form
-│   ├── listado.html      # Activity listing
-│   ├── detalle.html      # Activity details with ratings/comments
-│   └── estadisticas.html # Statistics with charts
-├── tarea2.sql            # Main database schema
-├── tabla-comentario.sql  # Comments table
-├── tabla-nota.sql        # Ratings table
-└── region-comuna.sql     # Chilean regions and communes data
+└── templates/
+    ├── base.html         # Base template
+    ├── index.html        # Home page
+    ├── agregar.html      # Add activity form
+    ├── listado.html      # Activity listing
+    ├── detalle.html      # Activity details with ratings/comments
+    └── estadisticas.html # Statistics with charts
 ```
 
 ## Troubleshooting

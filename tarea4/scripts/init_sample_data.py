@@ -4,6 +4,10 @@ Script to initialize sample data for testing the rating system
 Run this after setting up the database to populate with test data
 """
 
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from app import app, db
 from models import Actividad, Comuna, Region, Foto, ActividadTema, ContactarPor, Comentario, Nota
 from datetime import datetime, timedelta
