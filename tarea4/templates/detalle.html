@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+{% block title %}Detalle de Actividad{% endblock %}
+{% block content %}
+<h2>Detalle de Actividad</h2>
+<p><strong>Inicio:</strong> {{ actividad.dia_hora_inicio.strftime('%Y-%m-%d %H:%M') }}</p>
+<p><strong>Término:</strong> {{ actividad.dia_hora_termino.strftime('%Y-%m-%d %H:%M') if actividad.dia_hora_termino else '-' }}</p>
+<p><strong>Comuna:</strong> {{ actividad.comuna.nombre }}</p>
+<p><strong>Sector:</strong> {{ actividad.sector or '-' }}</p>
+<p><strong>Tema:</strong> {{ tema }}{% if glosa_otro %} ({{ glosa_otro }}){% endif %}</p>
+<p><strong>Organizador:</strong> {{ actividad.nombre }}</p>
+<p><strong>Email:</strong> {{ actividad.email }}</p>
+<p><strong>Celular:</strong> {{ actividad.celular or '-' }}</p>
+<p><strong>Contactos:</strong>
+  {% if contactos %}
+    <ul>
+      {% for c in contactos %}
+        <li>{{ c.nombre }}: {{ c.identificador }}</li>
+      {% endfor %}
+    </ul>
+  {% else %}-{% endif %}
+</p>
+<p><strong>Descripción:</strong> {{ actividad.descripcion or '-' }}</p>
+<p><strong>Fotos:</strong></p>
+<div>
+  {% for foto in fotos %}
+    <img src="{{ foto }}" width="320" height="240" style="cursor:pointer; margin:5px;" onclick="document.getElementById('modal-img').src='{{ foto }}';document.getElementById('modal').style.display='block';">
+  {% endfor %}
+</div>
+<div id="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8);">
+  <img id="modal-img" style="display: block; margin: 50px auto; width: 800px; height: 600px" />
+  <button onclick="document.getElementById('modal').style.display='none'">Cerrar</button>
+</div>
+
+<hr>
+<h2>Valoración</h2>
+<div id="valoracion-promedio">
+  <!-- El promedio se cargará aquí vía JS -->
+</div>
+
+<h3>Calificar actividad</h3>
+<form id="form-valoracion">
+  <label for="nota">Nota (1-5 estrellas):</label>
+  <select id="nota" name="nota" required>
+    <option value="">Seleccione una nota</option>
+    <option value="1">1 estrella</option>
+    <option value="2">2 estrellas</option>
+    <option value="3">3 estrellas</option>
+    <option value="4">4 estrellas</option>
+    <option value="5">5 estrellas</option>
+  </select>
+  <button type="submit">Calificar</button>
+  <div id="valoracion-errores" style="color:red;"></div>
+</form>
+
+<hr>
+<h2>Comentarios</h2>
+<div id="comentarios-listado">
+  <!-- Los comentarios se cargarán aquí vía JS -->
+</div>
+
+<h3>Agregar comentario</h3>
+<form id="form-comentario" autocomplete="off">
+  <label for="nombre">Nombre:</label>
+  <input type="text" id="nombre" name="nombre" required minlength="3" maxlength="80"><br>
+  <label for="texto">Comentario:</label><br>
+  <textarea id="texto" name="texto" rows="4" cols="50" required minlength="5"></textarea><br>
+  <button type="submit">Agregar comentario</button>
+  <div id="comentario-errores" style="color:red;"></div>
+</form>
+
+<script>
+const actividadId = {{ actividad.id }};
+const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+function cargarPromedioNotas() {
+  fetch(`/api/notas/${actividadId}`, {
+    headers: {
+      'Accept': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+    }
+  })
+    .then(r => r.json())
+    .then(response => {
+      if (!response.success) {
+        throw new Error(response.error);
+      }
+
+      let html = '';
+      if (response.total_notas === 0) {
+        html = '<p>Esta actividad aún no ha sido calificada.</p>';
+      } else {
+        const estrellas = '★'.repeat(Math.round(response.promedio)) + '☆'.repeat(5 - Math.round(response.promedio));
+        html = `<p><strong>Promedio:</strong> ${response.promedio}/5 ${estrellas} (${response.total_notas} valoraciones)</p>`;
+      }
+      document.getElementById('valoracion-promedio').innerHTML = html;
+    })
+    .catch(error => {
+      document.getElementById('valoracion-promedio').innerHTML =
+        `<p style="color:red;">Error: ${error.message || 'Error al cargar valoración'}</p>`;
+    });
+}
+
+function cargarComentarios() {
+  fetch(`/api/comentarios/${actividadId}`, {
+    headers: {
+      'Accept': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+    }
+  })
+    .then(r => r.json())
+    .then(response => {
+      if (!response.success) {
+        throw new Error(response.error);
+      }
+
+      let html = '';
+      if (response.data.length === 0) {
+        html = '<p>No hay comentarios aún.</p>';
+      } else {
+        html = '<ul>';
+        response.data.forEach(c => {
+          html += `<li><strong>${c.nombre}</strong> (${c.fecha}):<br>${c.texto}</li>`;
+        });
+        html += '</ul>';
+      }
+      document.getElementById('comentarios-listado').innerHTML = html;
+    })
+    .catch(error => {
+      document.getElementById('comentarios-listado').innerHTML =
+        `<p style="color:red;">Error: ${error.message || 'Error al cargar comentarios'}</p>`;
+    });
+}
+
+document.getElementById('form-valoracion').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const nota = document.getElementById('nota').value;
+
+  fetch(`/api/notas/${actividadId}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({nota: parseInt(nota)})
+  })
+  .then(r => r.json())
+  .then(response => {
+    if (!response.success) {
+      throw new Error(response.error);
+    }
+    document.getElementById('form-valoracion').reset();
+    document.getElementById('valoracion-errores').innerText = '';
+    cargarPromedioNotas();
+  })
+  .catch(error => {
+    document.getElementById('valoracion-errores').innerText =
+      error.message || 'Error al enviar la valoración';
+  });
+});
+
+document.getElementById('form-comentario').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const nombre = document.getElementById('nombre').value.trim();
+  const texto = document.getElementById('texto').value.trim();
+
+  fetch(`/api/comentarios/${actividadId}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({nombre, texto})
+  })
+  .then(r => r.json())
+  .then(response => {
+    if (!response.success) {
+      throw new Error(response.error);
+    }
+    document.getElementById('form-comentario').reset();
+    document.getElementById('comentario-errores').innerText = '';
+    cargarComentarios();
+  })
+  .catch(error => {
+    document.getElementById('comentario-errores').innerText =
+      error.message || 'Error al enviar el comentario';
+  });
+});
+
+// Cargar datos al iniciar
+cargarPromedioNotas();
+cargarComentarios();
+</script>
+{% endblock %}

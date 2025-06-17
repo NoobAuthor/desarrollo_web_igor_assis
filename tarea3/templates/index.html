@@ -1,0 +1,32 @@
+{% extends 'base.html' %} {% block title %}Portada - Gestión de Actividades
+Recreativas{% endblock %} {% block content %}
+<h2>Últimas 5 Actividades</h2>
+<table>
+	<thead>
+		<tr>
+			<th>Inicio</th>
+			<th>Término</th>
+			<th>Comuna</th>
+			<th>Sector</th>
+			<th>Tema</th>
+			<th>Foto</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for actividad in actividades %}
+		<tr>
+			<td>{{ actividad.dia_hora_inicio }}</td>
+			<td>{{ actividad.dia_hora_termino or '-' }}</td>
+			<td>{{ actividad.comuna_nombre }}</td>
+			<td>{{ actividad.sector or '-' }}</td>
+			<td>{{ actividad.tema }}</td>
+			<td>
+				{% if actividad.foto_url %}
+				<img src="{{ actividad.foto_url }}" alt="Foto" width="100" />
+				{% else %}-{% endif %}
+			</td>
+		</tr>
+		{% endfor %}
+	</tbody>
+</table>
+{% endblock %}
